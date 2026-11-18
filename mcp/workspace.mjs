@@ -147,7 +147,7 @@ export class DoorSignWorkspace {
     let rendered;
     if(formats.some(f=>f!=='json')){
       rendered=await renderNative(design,this.gallery,300);
-      if(rendered.quality.warnings.length||(rendered.quality.imageVisible!==false&&rendered.quality.photoDpi<300))throw new Error(`Print check failed: ${rendered.quality.warnings.join(' ')||`photo ${rendered.quality.photoDpi} dpi; zoom out`}`);
+      if(rendered.quality.warnings.length||(rendered.quality.imageVisible!==false&&rendered.quality.photoDpi<300))throw new Error(`Print check failed: ${rendered.quality.warnings.join(' ')||`photo ${rendered.quality.photoDpi} dpi; reduce zoom or choose a higher-resolution image${SIZES[design.sizeId].imageOptional?' (or hide the image)':''}`}`);
     }
     const exportId=randomUUID(),directory=path.join(this.directory,'exports',exportId);await mkdir(directory,{recursive:true});
     const artifacts=[];

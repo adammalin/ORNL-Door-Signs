@@ -126,7 +126,7 @@ async function requestRender() {
       qualityBox.classList.add('error'); heading.textContent = 'A little adjustment needed';
       text.textContent = quality.warnings.join(' ');
     } else if (quality.imageVisible!==false&&quality.photoDpi < 300) {
-      qualityBox.classList.add('warning'); heading.textContent = 'Reduce image zoom for print';
+      qualityBox.classList.add('warning'); heading.textContent = quality.photoDpi*design.crop.zoom<300?'Choose a larger image for print':'Reduce image zoom for print';
       text.textContent = `Photo resolution is ${quality.photoDpi} dpi at this crop. `+(quality.photoDpi*design.crop.zoom<300?`Choose a higher-resolution image${SIZES[design.sizeId].imageOptional?' or turn off Show image':''} to enable print exports.`:'Zoom out until it reaches at least 300 dpi to enable print exports.');
     } else {
       heading.textContent = 'Ready to export at 300 dpi';
