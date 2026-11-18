@@ -6,7 +6,7 @@ Create a new static site in the ORNL-Door-Signs GitHub repository, using the UI 
 
 SOURCE AND IMPLEMENTATION
 Repository: https://github.com/adammalin/ORNL-Door-Signs
-Intended Pages URL: https://adammalin.github.io/ORNL-Door-Signs/
+Live Pages URL: https://adammalin.github.io/ORNL-Door-Signs/
 Working checkout: /Users/ia2/Documents/Coding Projects/ORNL-Door-Signs
 Existing GitHub Desktop checkout: /Users/ia2/Documents/GitHub/ORNL Door Signs
 Supplied source: /Users/ia2/Desktop/Door Signs_2026 Update/
@@ -32,7 +32,13 @@ Mobile layout checked at 390 px; no controls extend past viewport.
 Color/font audit: literal render colors match ORNL tokens; UI uses those tokens and derived neutral mixes, Mulish/Aptos/Arial fallback, and square containers. No undocumented palette deviations.
 
 DEPLOYMENT
-Pending final publication and live verification at the time this initial summary was written. See latest update below.
+Published successfully to main. GitHub Pages is configured with build_type=workflow.
+Implementation commit: 2bb53bc7ffbb3dfe5d5565da10c6a53183be7e12
+Successful deployment: https://github.com/adammalin/ORNL-Door-Signs/actions/runs/44381856554
+Live URL returned HTTP 200 and the browser loaded the complete editor, gallery image and ready-to-export canvas.
+Both PNG and PDF were generated and downloaded from the public Pages site; final files again passed dimension, DPI, strict PDF parsing and identical-image-pixel checks.
+Live screenshot: output/qa/live-site.jpg (local, not published).
+Local QA exports/renders are in output/qa/ (gitignored). The site remains open in the Codex browser.
 
 NEXT CONTENT / PRODUCTION WORK
 Add more publicly approved images and their metadata through assets/gallery.json; instructions are in README.md. Keep stable image IDs for saved designs. Only the campus photo is approved in the starter gallery.
