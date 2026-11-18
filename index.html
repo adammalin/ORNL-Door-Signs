@@ -32,29 +32,37 @@
         <div class="panel-section">
           <div class="section-heading"><span class="section-icon" aria-hidden="true">T</span><div><h2>Your sign</h2><p>Start with the size and the words.</p></div></div>
           <label class="field">Sign size<select id="sign-size"><option value="medium-landscape">Medium · 8.5 × 5 in</option></select></label>
+          <label id="medium-layout-field" class="field">Medium layout<select id="medium-layout"></select></label>
           <p id="size-hint" class="hint">Landscape · 300 dpi</p>
           <label class="field">Organization<textarea id="organization" rows="2" maxlength="100" data-design spellcheck="true"></textarea></label>
           <label class="field">Title / name<textarea id="title" rows="2" maxlength="100" data-design spellcheck="true"></textarea></label>
-          <label class="checkbox-field"><input id="show-subtitle" type="checkbox" checked> Show subtitle</label>
+          <label class="checkbox-field"><input id="show-subtitle" type="checkbox" checked> <span id="subtitle-toggle-label">Show subtitle</span></label>
           <label id="subtitle-field" class="field"><span id="subtitle-label">Subtitle / role</span><textarea id="subtitle" rows="2" maxlength="120" data-design spellcheck="true"></textarea></label>
-          <div class="field-row"><label class="field">Group / program<textarea id="details" rows="2" maxlength="160" data-design></textarea></label><label class="field room-field">Room <span class="optional">Optional</span><input id="room" type="text" maxlength="30" data-design></label></div>
-          <label class="range-field" for="title-size"><span>Title size <output id="title-size-value"></output></span><input id="title-size" type="range" min="24" max="64" step="1" value="55"></label>
+          <label class="field"><span id="details-label">Group / program</span><textarea id="details" rows="2" maxlength="160" data-design></textarea></label>
+          <label class="range-field" for="title-size"><span><span id="title-size-label">Title size</span> <output id="title-size-value"></output></span><input id="title-size" type="range" min="24" max="64" step="1" value="55"></label>
           <p id="text-hint" class="hint">Long text fits automatically. Use a line break to choose where it wraps.</p>
+          <label class="checkbox-field"><input id="show-room" type="checkbox"> Show room number</label>
+          <label id="room-field" class="field" hidden>Room number / label<input id="room" type="text" maxlength="30" placeholder="ROOM 212" data-design></label>
+          <label id="background-field" class="field" hidden>Background<select id="background"><option value="white">White</option><option value="color">Color</option></select></label>
         </div>
         <div id="entries-section" class="panel-section" hidden>
-          <div class="crop-heading"><h2>Names</h2><button id="add-entry" type="button" class="text-button">Add name</button></div>
-          <p class="hint">Add up to 12 entries. Leave a sub-name blank to omit it. Use Undo to restore a removed entry.</p>
+          <div class="crop-heading"><h2 id="list-heading">Names</h2><button id="add-entry" type="button" class="text-button">Add name</button></div>
+          <p id="list-hint" class="hint">Add up to 12 entries. Leave a sub-name blank to omit it. Use Undo to restore a removed entry.</p>
           <div id="entries"></div>
         </div>
-        <div class="panel-section gallery-section">
+        <div id="gallery-section" class="panel-section gallery-section">
           <div class="section-heading"><span class="section-icon picture-icon" aria-hidden="true">▧</span><div><h2>Choose an image</h2><p>A curated gallery for your space.</p></div></div>
           <label id="image-toggle-field" class="checkbox-field" hidden><input id="show-image" type="checkbox" checked> Show image</label>
           <p id="image-hidden-hint" class="hint" hidden>The image is hidden. Your image choice is retained for when you turn it back on.</p>
+          <p id="image-choice-summary" class="hint">Using Main Oak Ridge Campus</p>
+          <div id="image-choice-actions" class="image-choice-actions"><button id="choose-different-image" type="button" class="button secondary" aria-controls="image-picker" aria-expanded="false">Choose different image</button><button id="use-default-image" type="button" class="text-button" hidden>Use Main Oak Ridge Campus</button></div>
+          <div id="image-picker" hidden>
           <label class="field">Search images<input id="image-search" type="search" placeholder="Search campus, materials, energy…"></label>
           <div class="field-row"><label class="field">Category<select id="category"><option value="">All categories</option></select></label><label class="field">Science area<select id="science-area"><option value="">All science areas</option></select></label></div>
           <div class="gallery-caption"><span id="gallery-count" role="status">Loading gallery…</span><button id="clear-filters" class="text-button" hidden>Clear filters</button></div>
           <div id="gallery" class="gallery" aria-label="Approved gallery images"></div>
           <p class="hint">Gallery additions are reviewed and published by the site maintainer.</p>
+          </div>
         </div>
       </section>
       <section class="preview-panel" aria-label="Design canvas and exports">

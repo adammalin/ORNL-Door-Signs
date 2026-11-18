@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,readFile} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {defaultDesign,validateDesign,patchDesign,SIZES,fileStem} from '../src/model.js';
+import {defaultDesign,validateDesign,patchDesign,SIZES,MEDIUM_LAYOUTS,fileStem} from '../src/model.js';
 import {DoorSignWorkspace} from '../mcp/workspace.mjs';
 const init=async()=>new DoorSignWorkspace({directory:await mkdtemp(path.join(os.tmpdir(),'door-sign-templates-'))}).init();
 
@@ -53,4 +53,70 @@ test('new templates export precise physical sizes and correct size filenames',as
   const pdf=await readFile(result.artifacts.find(a=>a.format==='pdf').path,'latin1');assert.ok(pdf.includes(`/MediaBox [0 0 ${size.width*72} ${size.height*72}]`));
   assert.ok(result.artifacts.every(a=>a.filename.includes(`-${size.width}x${size.height}.`)));
  }
+});
+
+test('square and menu templates remain image-free with editable backgrounds and lists',async()=>{
+ const w=await init();
+ for(const sizeId of ['square-bsd','large-menu']){
+  const d=await w.create({design:{sizeId}});assert.equal(d.design.showImage,false);assert.equal(d.design.imageId,null);
+  assert.equal((await w.check(d.id)).printReady,true);
+  await assert.rejects(w.update({id:d.id,patch:{showImage:true}}),/does not include images/);
+  const out=await w.export({id:d.id,formats:['png','pdf']});
+  const png=await readFile(out.artifacts[0].path),size=SIZES[sizeId];assert.equal(png.readUInt32BE(16),3300);assert.equal(png.readUInt32BE(20),size.height*300);
+  assert.ok((await readFile(out.artifacts[1].path,'latin1')).includes(`/MediaBox [0 0 792 ${size.height*72}]`));
+ }
+ const d=await w.create({design:{sizeId:'large-menu',menuItems:[{label:'Sample information\nsecond line',value:'B-203'}]}});
+ const white=await w.preview(d.id,72);await w.update({id:d.id,patch:{background:'color'}});const color=await w.preview(d.id,72);
+ assert.notDeepEqual(await white.canvas.encode('png'),await color.canvas.encode('png'));assert.equal(color.quality.warnings.length,0);
+ await assert.rejects(w.update({id:d.id,patch:{background:'blue'}}),/background/);
+ await assert.rejects(w.update({id:d.id,patch:{menuItems:Array(41).fill({label:'X',value:'1'})}}),/at most 40/);
+ await assert.rejects(w.update({id:d.id,patch:{menuItems:[{label:'X',value:'1',url:'bad'}]}}),/information item/);
+ await w.update({id:d.id,patch:{menuItems:[]}});assert.equal((await w.check(d.id)).printReady,false);
+});
+
+test('room label toggles on every template and hidden text does not affect artwork',async()=>{
+ const w=await init();
+ for(const sizeId of Object.keys(SIZES)){
+  const d=await w.create({design:{sizeId,showRoom:false,room:'ROOM 212'}}),before=await w.preview(d.id,72);
+  await w.update({id:d.id,patch:{room:'ROOM 213'}});assert.deepEqual(await before.canvas.encode('png'),await (await w.preview(d.id,72)).canvas.encode('png'));
+  await w.update({id:d.id,patch:{showRoom:true}});const shown=await w.preview(d.id,72);
+  assert.equal(shown.quality.warnings.length,0,sizeId);assert.ok(shown.quality.hitRegions.some(r=>r.field==='room'));assert.notDeepEqual(await before.canvas.encode('png'),await shown.canvas.encode('png'));
+  await w.update({id:d.id,patch:{room:''}});assert.ok((await w.check(d.id)).warnings.some(x=>x.includes('room number')));
+ }
+ const legacy=defaultDesign();delete legacy.showRoom;legacy.room='ROOM 101';assert.equal(validateDesign(legacy,w.gallery).showRoom,true);
+});
+
+test('campus defaults, saved choices and picker controls remain explicit',async()=>{
+ const w=await init();const d=await w.create({design:{title:'Quantum optics'}});assert.equal(d.design.imageId,'campus-aerial');
+ const alternative=w.gallery.find(i=>i.id!=='campus-aerial');
+ const chosen=await w.create({design:{imageId:alternative.id}});assert.equal(chosen.design.imageId,alternative.id);
+ await w.imagePicker({action:'open'});assert.equal(w.session().view.galleryOpen,true);
+ await w.imagePicker({action:'use_default'});assert.equal(w.get().design.imageId,'campus-aerial');assert.equal(w.session().view.galleryOpen,false);
+ assert.equal(patchDesign(chosen.design,{sizeId:'small-room'},w.gallery).imageId,'campus-aerial');
+ assert.equal(validateDesign(chosen.design,w.gallery).imageId,alternative.id);
+ const queried=await w.create({design:{imageQuery:alternative.title}});assert.ok(queried.design.imageId);
+ await w.create({design:{sizeId:'square-bsd'}});await assert.rejects(w.imagePicker({action:'open'}),/no visible image/);
+});
+
+
+test('Medium sub-layouts retain content, defaults, image policy and exact print size',async()=>{
+ const w=await init();
+ for(const mediumLayout of Object.keys(MEDIUM_LAYOUTS)){
+  const d=await w.create({design:{mediumLayout,room:'ROOM 212',showRoom:true}});
+  const check=await w.check(d.id);assert.equal(check.printReady,true,mediumLayout+': '+check.warnings.join(' '));
+  assert.equal(d.design.imageId,MEDIUM_LAYOUTS[mediumLayout].imageDisabled?null:'campus-aerial');
+  const out=await w.export({id:d.id,formats:['png','pdf','json']});const png=await readFile(out.artifacts[0].path);
+  assert.equal(png.readUInt32BE(16),2550);assert.equal(png.readUInt32BE(20),1500);
+  assert.ok((await readFile(out.artifacts[1].path,'latin1')).includes('/MediaBox [0 0 612 360]'));
+  assert.deepEqual(validateDesign(JSON.parse(await readFile(out.artifacts[2].path,'utf8')),w.gallery),d.design);
+  if(MEDIUM_LAYOUTS[mediumLayout].imageDisabled)await assert.rejects(w.update({id:d.id,patch:{showImage:true}}),/does not include images/);
+  if(MEDIUM_LAYOUTS[mediumLayout].multiName){
+   const before=await w.preview(d.id,72);await w.update({id:d.id,patch:{showSubtitle:false}});const after=await w.preview(d.id,72);assert.notDeepEqual(await before.canvas.encode('png'),await after.canvas.encode('png'));assert.equal(w.get(d.id).design.entries[0].subname,'Role / title');
+  }
+ }
+ const original=defaultDesign();const changed=patchDesign(original,{mediumLayout:'shared-office'},w.gallery);assert.equal(changed.entries.length,2);assert.equal(changed.entries[0].name,original.title);
+ const color=patchDesign(changed,{mediumLayout:'color'},w.gallery);assert.equal(color.imageId,null);assert.deepEqual(color.entries,changed.entries);
+ assert.equal(patchDesign(color,{mediumLayout:'standard'},w.gallery).imageId,'campus-aerial');
+ assert.throws(()=>patchDesign(color,{mediumLayout:'unknown'},w.gallery),/Medium layout/);
+ const old=defaultDesign();delete old.mediumLayout;assert.equal(validateDesign(old,w.gallery).mediumLayout,'standard');
 });

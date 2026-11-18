@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir, rename, realpath, stat } from 'node:fs/prom
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
-import { DEFAULT_DESIGN, SIZES, clone, defaultDesign, validateDesign, patchDesign, filterGallery, fileStem } from '../src/model.js';
+import { DEFAULT_DESIGN, SIZES, clone, defaultDesign, defaultImage, designSize, validateDesign, patchDesign, filterGallery, fileStem } from '../src/model.js';
 import { renderSign } from '../src/render.js';
 import { pngWithDpi, canvasPdf } from '../src/print.js';
 
@@ -23,7 +23,7 @@ export async function renderNative(design, gallery, dpi = 150) {
   const quality=await renderSign(canvas,design,gallery,dpi,{
     fontsReady:async()=>{},
     loadImage:async src=>{
-      if(!/^assets\/(gallery\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)|template-(leaf|logo|hexagons)\.png)$/.test(src))throw new Error('Invalid artwork path.');
+      if(!/^assets\/(gallery\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)|template-(leaf|leaf-white|logo|hexagons|medium-hexagons)\.png)$/.test(src))throw new Error('Invalid artwork path.');
       if(!imageCache.has(src)){
         const resolved=await realpath(path.join(PROJECT_ROOT,src));
         if(!resolved.startsWith(PROJECT_ROOT+path.sep))throw new Error('Artwork must remain inside the project.');
@@ -45,7 +45,7 @@ export class DoorSignWorkspace {
     this.gallery=JSON.parse(await readFile(path.join(PROJECT_ROOT,'assets/gallery.json'),'utf8')).filter(i=>i.approved===true);
     this.stateFile=path.join(this.directory,'workspace.json');
     try { this.state=JSON.parse(await readFile(this.stateFile,'utf8'));if(this.state.version!==1||!this.state.designs)throw new Error('Unsupported workspace schema.'); }
-    catch(error){if(error.code!=='ENOENT')throw error;this.state={version:1,revision:0,activeId:null,designs:{},view:{query:'',category:'',scienceArea:''},tutorial:{sequence:0,action:'none',step:0}};await this.persist();}
+    catch(error){if(error.code!=='ENOENT')throw error;this.state={version:1,revision:0,activeId:null,designs:{},view:{query:'',category:'',scienceArea:'',galleryOpen:false},tutorial:{sequence:0,action:'none',step:0}};await this.persist();}
     if(!this.state.activeId)await this.create({name:'Untitled sign'});
     return this;
   }
@@ -87,8 +87,14 @@ export class DoorSignWorkspace {
     }).sort((a,b)=>b.score-a.score||a.image.id.localeCompare(b.image.id)).slice(0,limit);
   }
   makeDesign(input={}) {
-    const design={...defaultDesign(input.sizeId),...Object.fromEntries(Object.entries(input).filter(([k])=>textFields.includes(k)||['sizeId','titleSize','imageId','showSubtitle','showImage','entries'].includes(k))),crop:{...DEFAULT_DESIGN.crop,...input.crop}};
-    if(!input.imageId&&!(input.imageId===null&&design.showImage===false)){const image=this.recommend({query:input.imageQuery||[design.organization,design.title,design.subtitle,design.details].join(' '),category:input.category||'',scienceArea:input.scienceArea||'',limit:1})[0]?.image;if(!image)throw new Error('No approved image matches the requested filters.');design.imageId=image.id;}
+    const design={...defaultDesign(input.sizeId,input.mediumLayout),...Object.fromEntries(Object.entries(input).filter(([k])=>textFields.includes(k)||['sizeId','titleSize','imageId','showRoom','showSubtitle','showImage','entries','menuItems','background','mediumLayout'].includes(k))),crop:{...DEFAULT_DESIGN.crop,...input.crop}};
+    if(designSize(design).imageDisabled){if(input.showImage===undefined)design.showImage=false;if(input.imageId===undefined)design.imageId=null;}
+    else if(input.imageId===undefined){
+      const explicitSearch=Boolean(input.imageQuery||input.category||input.scienceArea);
+      const image=explicitSearch?this.recommend({query:input.imageQuery||'',category:input.category||'',scienceArea:input.scienceArea||'',limit:1})[0]?.image:defaultImage(this.gallery);
+      if(!image)throw new Error('No approved image matches the requested filters.');design.imageId=image.id;
+    }
+    if(input.room!==undefined&&input.showRoom===undefined)design.showRoom=Boolean(input.room.trim());
     const image=this.gallery.find(image=>image.id===design.imageId);
     design.crop={...DEFAULT_DESIGN.crop,...image?.defaultCrop,...input.crop};
     return validateDesign(design,this.gallery);
@@ -106,7 +112,7 @@ export class DoorSignWorkspace {
     return this.mutate(()=>{
       const record=this.get(id);
       if(expectedRevision!==undefined&&expectedRevision!==record.revision)throw Object.assign(new Error('Design changed since it was read. Get the latest design and retry.'),{statusCode:409});
-      for(const key of Object.keys(patch))if(![...textFields,'showSubtitle','showImage','entries','sizeId','titleSize','imageId','crop'].includes(key))throw new Error(`Unknown editable property: ${key}`);
+      for(const key of Object.keys(patch))if(![...textFields,'showRoom','showSubtitle','showImage','entries','menuItems','background','mediumLayout','sizeId','titleSize','imageId','crop'].includes(key))throw new Error(`Unknown editable property: ${key}`);
       const next=patchDesign(record.design,patch,this.gallery);
       if(JSON.stringify(next)!==JSON.stringify(record.design)){
         record.history.push(record.design);record.history=record.history.slice(-100);record.future=[];
@@ -126,7 +132,15 @@ export class DoorSignWorkspace {
   async resetCrop(id) {return this.update({id,patch:{crop:{x:50,y:50,zoom:1}}});}
   async selectImage({id=this.state.activeId,imageId,crop}={}) {
     const image=this.gallery.find(i=>i.id===imageId);if(!image)throw new Error('Choose an approved gallery image ID.');
+    if(designSize(this.get(id).design).imageDisabled)throw new Error('This template does not include images.');
     return this.update({id,patch:{imageId,crop:crop||image.defaultCrop||{x:50,y:50,zoom:1}}});
+  }
+  async imagePicker({action,id=this.state.activeId}) {
+    if(!['open','close','use_default'].includes(action))throw new Error('Invalid image picker action.');
+    const design=this.get(id).design;
+    if(action!=='close'&&(designSize(design).imageDisabled||!design.showImage))throw new Error('This template has no visible image.');
+    if(action==='use_default')await this.update({id,patch:{imageId:defaultImage(this.gallery).id,crop:{x:50,y:50,zoom:1}}});
+    await this.view({galleryOpen:action==='open'});return this.session();
   }
   async view(patch) {
     return this.mutate(()=>{this.state.view={...this.state.view,...patch};return this.findImages(this.state.view);});

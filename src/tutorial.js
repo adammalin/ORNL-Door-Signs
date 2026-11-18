@@ -1,9 +1,9 @@
 export const TUTORIAL_KEY = 'ornl-door-signs-tutorial-v1';
 export const TUTORIAL_STEPS = [
   { target: '.preview-panel', title: 'Welcome to Door Sign Studio', text: 'Choose a sign template and create your design in a few steps. Your live canvas updates as you edit. You can close this tour at any time and reopen it with Tutorial.' },
-  { target: '#sign-size', title: 'Start with the sign size', text: 'Choose Medium (8.5 × 5), Small room sign (8.75 × 2.5), or an 11 × 17 portrait template. The canvas and print files use the selected physical size.' },
-  { target: '#title', title: 'Add your text', text: 'Edit the organization, title or name, role, group, and optional room. Use a line break for a two-line name. Show subtitle controls the optional second line. Large templates let you add, remove and arrange names and sub-names. Long text fits automatically.' },
-  { target: '.gallery-section', title: 'Find the right image', text: 'Search by subject, image description, or Canto keyword. Combine Category and Science area to narrow the approved gallery, then select an image. Large templates also let you hide the photo with Show image.' },
+  { target: '#sign-size', title: 'Start with the sign size', text: 'Choose Medium (8.5 × 5), Small room sign (8.75 × 2.5), 11 × 11, or an 11 × 17 portrait template, including an information menu. Medium also offers a layout selector for side photos, header strips, shared offices and image-free designs. The canvas and print files use the selected physical size.' },
+  { target: '#title', title: 'Add your text', text: 'Edit the organization, title or name, role, group, and optional room. Show room number adds a label at the lower right on every template. Use a line break for a two-line name. Show subtitle controls the optional second line. Large templates let you add, remove and arrange names and sub-names. Information menus have editable information/room pairs and White or Color backgrounds. Long text fits automatically.' },
+  { target: '.gallery-section', title: 'Find the right image', text: 'Image templates start with Main Oak Ridge Campus. Select Choose different image to reveal the gallery; search by subject, image description, or Canto keyword. Combine Category and Science area to narrow the approved gallery, then select an image. Large templates also let you hide the photo with Show image.' },
   { target: '#crop-controls', title: 'Frame the photograph', text: 'Drag the photo or use Horizontal, Vertical, and Zoom to choose the crop. Arrow keys also move the crop when the canvas has focus. Reset crop and Undo make it easy to try again.' },
   { target: '#quality', title: 'Check print quality', text: 'The print check verifies text fit and the photo’s effective resolution. If the photo falls below 300 dpi, zoom out before exporting. Always review your text and the final sign.' },
   { target: '.document-actions', title: 'Save your editable design', text: 'Save JSON keeps a portable, editable copy. Open design restores it later. A draft also autosaves on this device, while New design starts another sign.' },
@@ -33,6 +33,7 @@ export function createTutorial({storage = localStorage, onChange = () => {}} = {
     dialog.querySelector('[data-tour=back]').disabled = index === 0;
     dialog.querySelector('[data-tour=next]').textContent = index === TUTORIAL_STEPS.length - 1 ? 'Finish' : 'Next';
     target = document.querySelector(step.target);
+    if(!target?.getClientRects().length)target=document.querySelector('.preview-panel');
     target?.classList.add('tutorial-target');
     target?.scrollIntoView({block:'center', behavior:'instant'});
     const rect = target?.getBoundingClientRect();

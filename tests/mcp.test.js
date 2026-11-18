@@ -16,7 +16,7 @@ test('real MCP client discovers tools and calls editing, validation, preview and
     const list=await client.listTools();assert.ok(list.tools.length>=20);
     const call=(name,args={})=>client.callTool({name,arguments:args});
     const status=await call('get_status');assert.equal(status.isError,undefined);
-    const templates=await call('list_templates');assert.equal(Object.keys(JSON.parse(templates.content[0].text).templates).length,5);
+    const templates=await call('list_templates');assert.equal(Object.keys(JSON.parse(templates.content[0].text).templates).length,7);
     const created=await call('create_design',{design:{title:'MCP protocol test',imageId:'campus-aerial'}});assert.ok(!created.isError);
     const item=JSON.parse(created.content[0].text);
     await call('update_design',{id:item.id,expectedRevision:item.revision,patch:{subtitle:'Researcher',room:'101'}});

@@ -12,7 +12,7 @@ export async function startEditor(workspace,{port=0}={}) {
       if(req.headers.host!==host&&req.headers.host!==`localhost:${address.port}`)return json(403,{error:'Invalid host.'});
       if(req.headers.origin&&![origin,`http://localhost:${address.port}`].includes(req.headers.origin))return json(403,{error:'Cross-origin access is not allowed.'});
       const url=new URL(req.url,origin),route=decodeURIComponent(url.pathname);
-      if(req.method==='GET'&&route==='/api/status')return json(200,{app:'ornl-door-signs-companion',version:'0.3.0',editorUrl:workspace.editorUrl});
+      if(req.method==='GET'&&route==='/api/status')return json(200,{app:'ornl-door-signs-companion',version:'0.4.0',editorUrl:workspace.editorUrl});
       if(req.method==='GET'&&route==='/api/session')return json(200,workspace.session());
       if(req.method==='POST'&&route.startsWith('/api/')){
         if(req.headers['content-type']?.split(';')[0]!=='application/json')return json(415,{error:'JSON required.'});
@@ -20,7 +20,7 @@ export async function startEditor(workspace,{port=0}={}) {
         const input=JSON.parse(body);
         if(route==='/api/design')return json(200,{result:await workspace.update(input),...workspace.session()});
         if(route==='/api/view'){
-          for(const k of Object.keys(input))if(!['query','category','scienceArea'].includes(k)||typeof input[k]!=='string'||input[k].length>500)throw new Error('Invalid gallery filter.');
+          for(const k of Object.keys(input))if(k==='galleryOpen'?typeof input[k]!=='boolean':(!['query','category','scienceArea'].includes(k)||typeof input[k]!=='string'||input[k].length>500))throw new Error('Invalid gallery filter.');
           await workspace.view(input);return json(200,workspace.session());
         }
         return json(404,{error:'Unknown API route.'});

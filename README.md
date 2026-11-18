@@ -1,13 +1,13 @@
 # Door Sign Studio
 
-A static, browser-only ORNL door-sign editor, styled to match QR Studio. Templates include **8.5 × 5 inches**, **8.75 × 2.5 inches**, and three **11 × 17-inch** portrait layouts.
+A static, browser-only ORNL door-sign editor, styled to match QR Studio. Templates include **8.5 × 5 inches**, **8.75 × 2.5 inches**, **11 × 11 inches**, and four **11 × 17-inch** portrait layouts.
 
 **Site:** https://adammalin.github.io/ORNL-Door-Signs/
 
 ## Use the editor
 
 1. Choose a template in **Sign size**, then edit its text. Medium signs provide organization, title/name, subtitle/role, group/program and room fields. Small room signs provide a centered title and optional subtitle. Large signs provide a heading, optional subtitle and editable name list. Use **Show subtitle** to toggle the second line without losing its text. Click the text on the canvas to focus its field. Text wraps and fits automatically; explicit line breaks are supported.
-2. Choose an approved image. Search matches the title, description, tags, category, and science areas. Category and science-area filters work together with search.
+2. Image templates start with **Main Oak Ridge Campus**. Select **Choose different image** to open the approved gallery. Search matches the title, description, tags, category, and science areas. Category and science-area filters work together with search.
 3. Reframe the image using the crop sliders or by dragging the photo on the canvas. When the canvas has keyboard focus, arrow keys adjust the crop; Shift makes a larger adjustment. Undo and Redo restore edits.
 4. **Save JSON** downloads an editable document. **Open design** reopens it. Drafts also autosave in this browser on this device; save JSON to keep a portable copy. New design can be reversed with Undo during the session.
 5. Download PNG or PDF. If the browser does not start a download automatically, use the prepared-file save link beneath the export buttons.
@@ -17,12 +17,14 @@ All PNGs include a `pHYs` chunk specifying 300 dpi (11811 pixels/meter). PDF pag
 | Template | PNG at 300 dpi | PDF page (points) |
 | --- | --- | --- |
 | Medium · 8.5 × 5 in | 2550 × 1500 | 612 × 360 |
+| Square BSD · 11 × 11 in | 3300 × 3300 | 792 × 792 |
+| Information menu · 11 × 17 in | 3300 × 5100 | 792 × 1224 |
 | Small room sign · 8.75 × 2.5 in | 2625 × 750 | 630 × 180 |
 | Large BSD · 11 × 17 in | 3300 × 5100 | 792 × 1224 |
 | Large Director’s Office · 11 × 17 in | 3300 × 5100 | 792 × 1224 |
 | Large Director’s Office staff · 11 × 17 in | 3300 × 5100 | 792 × 1224 |
 
-Large templates support **Show image** and up to 12 name/sub-name entries. Add, remove, move Up/Down, choose Primary/Standard/Assistant style and Left/Right alignment. A blank sub-name omits that line. Dense lists or text that does not fit block print export. Hiding the photo frees additional room for names. New design keeps the selected template; switching templates retains custom text where applicable. Undo restores prior edits.
+The three Large name templates support **Show image** and up to 12 name/sub-name entries. Add, remove, move Up/Down, choose Primary/Standard/Assistant style and Left/Right alignment. A blank sub-name omits that line. Dense lists or text that does not fit block print export. Hiding the photo frees additional room for names. New design keeps the selected template; switching templates retains custom text where applicable. Undo restores prior edits.
 
 The PDF embeds the same image with lossless compression. Print the PDF at **Actual size / 100%**, without fitting to the paper. Use the printer's borderless setting or trim larger paper if necessary.
 
@@ -45,7 +47,7 @@ Open http://127.0.0.1:4173/. `npm run dev` serves the source tree for developmen
 
 The eight-step walkthrough opens once per browser profile. Use **Tutorial** to replay it.
 
-The optional local MCP companion exposes 23 tools for image search and recommendations, every design field, crop, history, import, validation, preview, exports, gallery filters, tutorial controls, and batches of up to 500 signs. Its local editor stays synchronized with agent edits and checks revisions before saving. Run `npm run mcp` through an MCP host; see [MCP setup and tool reference](docs/MCP.md). The static site also exposes 14 WebMCP actions when supported by the browser.
+The optional local MCP companion exposes 24 tools for image search and recommendations, every design field, crop, history, import, validation, preview, exports, gallery filters, tutorial controls, and batches of up to 500 signs. Its local editor stays synchronized with agent edits and checks revisions before saving. Run `npm run mcp` through an MCP host; see [MCP setup and tool reference](docs/MCP.md). The static site also exposes 15 WebMCP actions when supported by the browser.
 
 The November 18 owner-reviewed gallery contains **83 images**: the starter campus photo plus 82 Canto photographs across 21 populated categories. Canto descriptions and keywords support search; each photo includes reviewed alt text and source provenance. The 41 rejected files remain excluded. Two selected originals (`91.jpg` and `sns-3671-2005.jpg`) are held outside the site because their default crops fall below 300 effective dpi.
 
@@ -96,7 +98,7 @@ Repository Settings → Pages → Source must be **GitHub Actions**. `.github/wo
 - `assets/ornl-design-tokens.css`: packaged ORNL palette and typography tokens.
 - `scripts/build.mjs`: static output with only approved gallery assets.
 
-To add a sign size, add a registry entry **and a corresponding layout/render template**, expose it in the size selector, and verify physical-size exports. Do not merely stretch the current 850 × 500 design coordinates into a different aspect ratio. JSON records a `sizeId` so templates coexist without changing old documents. Version-1 documents remain readable; omitted `showSubtitle` and `showImage` default to true and omitted `entries` defaults to an empty list. Incompatible JSON changes require a new schema version and an explicit migration.
+To add a sign size, add a registry entry **and a corresponding layout/render template**, expose it in the size selector, and verify physical-size exports. Do not merely stretch the current 850 × 500 design coordinates into a different aspect ratio. JSON records a `sizeId` so templates coexist without changing old documents. Version-1 documents remain readable; omitted `showSubtitle` defaults to true, `showImage` follows template capability, and legacy nonempty room text remains visible and omitted `entries` defaults to an empty list. Incompatible JSON changes require a new schema version and an explicit migration.
 
 ## Source artwork and branding
 
@@ -111,3 +113,7 @@ The interface uses the QR Studio green/navy palette, Mulish, a narrow gradient r
 The small room layout follows the supplied CopyRoom/Kitchen PSD/JPG examples, whose 1750 × 500 pixel sources specify 200 dpi and therefore 8.75 × 2.5 inches. The app renders live type and approved gallery artwork at 300 dpi. One template supports either a title alone or a title plus subtitle.
 
 The three large layouts follow `ORNL-BSD-Large_11x17wBorder.psd`, `ORNL-Directors Office-Large_11x17wBorder.psd`, and `ORNL-Directors Office 2-Large_11x17wBorder.psd` (3300 × 5100 pixels). Their different header heights and name hierarchies are preserved as editable layouts. A half-inch border gives the gallery photo a 10-inch print width. Header gray is a 60% Graphite/40% Polar blend. The BSD logo and hexagons are original masked layers extracted from the supplied BSD PSD, used with preserved proportions and colors. Source PSDs remain unchanged. Defaults use neutral name/role placeholders rather than treating example personnel as current staffing information.
+
+Every template offers **Show room number**, retaining text when hidden. Square BSD is image-free. Information menu supports White / Color backgrounds and up to 40 addable, removable and reorderable information/room pairs. Image templates start with Main Oak Ridge Campus; Choose different image reveals alternatives and Use Main Oak Ridge Campus restores the default. New designs and template switches use campus; saved JSON preserves explicit image choices.
+
+Medium includes a **Medium layout** selector: White · side image; Shared office · side image; BSD · green header and image; Director’s Office · gray header and image; BSD · white and image; Full color · no image; White · no image. The shared/BSD/Director variants reuse the editable name list, including optional sub-names, styling, alignment and ordering. The green header exposes an editable Header tagline. Standard covers the DVCD, IPMG, ORE and one/two-line name examples through live text and line breaks; source personnel are not prefilled. Photo templates allow Show image; the two image-free variants keep it disabled. New design retains the Medium layout. Version-1 JSON without `mediumLayout` opens as `standard`.
