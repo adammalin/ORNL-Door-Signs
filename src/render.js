@@ -10,7 +10,11 @@ export function loadImage(src) {
     image.onerror = () => { images.delete(src); reject(new Error('An artwork image could not load. Reload the page and try again.')); };
     image.src = new URL(src, document.baseURI).href;
   }));
-  return images.get(src);
+  const result=images.get(src);
+  // Bound decoded high-resolution photos while browsing the larger gallery.
+  images.delete(src);images.set(src,result);
+  while(images.size>6)images.delete(images.keys().next().value);
+  return result;
 }
 function linesFor(ctx, text, width, spacing) {
   const measure = value => ctx.measureText(value).width + Math.max(0, [...value].length - 1) * spacing;

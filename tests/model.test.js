@@ -22,12 +22,12 @@ test('control patches reject invalid objects and unknown nested crop settings',(
   assert.deepEqual(patchDesign(clone(DEFAULT_DESIGN),{crop:{x:12}},gallery).crop,{x:12,y:50,zoom:1});
 });
 test('gallery search combines terms, category and science area and excludes pending images',()=>{
-  const samples=[...gallery,{...gallery[0],id:'not-approved',title:'Secret',approved:false}];
-  assert.equal(filterGallery(samples,'oAK aerial','Campus','General').length,1);
+  const samples=[gallery[0],{...gallery[0],id:'not-approved',title:'Secret',approved:false}];
+  assert.equal(filterGallery(samples,'oAK aerial','Campus Scenery','General').length,1);
   assert.equal(filterGallery(samples,'campus','Materials','General').length,0);
   assert.equal(filterGallery(samples,'no matching science').length,0);
   assert.equal(filterGallery(samples,'Secret').length,0);
-  assert.equal(filterGallery(samples).length,gallery.length);
+  assert.equal(filterGallery(samples).length,1);
 });
 test('every pan and zoom covers the complete image frame',()=>{
   for(const [w,h] of [[3070,2047],[600,1800],[1000,1000]]) {

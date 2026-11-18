@@ -35,6 +35,8 @@ The eight-step walkthrough opens once per browser profile. Use **Tutorial** to r
 
 The optional local MCP companion exposes 23 tools for image search and recommendations, every design field, crop, history, import, validation, preview, exports, gallery filters, tutorial controls, and batches of up to 500 signs. Its local editor stays synchronized with agent edits and checks revisions before saving. Run `npm run mcp` through an MCP host; see [MCP setup and tool reference](docs/MCP.md). The static site also exposes 14 WebMCP actions when supported by the browser.
 
+The November 18 owner-reviewed gallery contains **83 images**: the starter campus photo plus 82 Canto photographs across 21 populated categories. Canto descriptions and keywords support search; each photo includes reviewed alt text and source provenance. The 41 rejected files remain excluded. Two selected originals (`91.jpg` and `sns-3671-2005.jpg`) are held outside the site because their default crops fall below 300 effective dpi.
+
 ## Add approved gallery images
 
 Gallery maintenance is a repository operation. Visitors cannot upload their own images or mark an image approved in an imported sign JSON.

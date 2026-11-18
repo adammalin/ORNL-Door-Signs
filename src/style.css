@@ -22,3 +22,7 @@
 .tutorial-target{outline:4px solid var(--ornl-forge);outline-offset:6px}
 .agent-status{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line);color:var(--ornl-green)}
 @media(max-width:800px){.tutorial-dialog,.tutorial-dialog.tour-left{left:16px;right:auto;bottom:16px;padding:22px}.tutorial-dialog.tour-top{top:16px;bottom:auto}.document-actions{flex-wrap:wrap}.document-actions .button{padding:10px 13px}.range-grid .range-field>span{display:grid;gap:4px;min-height:38px}}
+
+/* Keep the curated image browser within reach of its filters. */
+.gallery{max-height:34rem;overflow-y:auto;overscroll-behavior:contain;padding:4px;scrollbar-gutter:stable}
+@media(max-width:800px){.gallery{max-height:26rem}}
