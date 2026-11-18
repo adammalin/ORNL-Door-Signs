@@ -51,13 +51,16 @@ function textBlock(ctx, text, {x,y,width,height,maxSize,minSize=14,weight=400,it
   ctx.restore();
   return { fits, size, height: wrapped.lines.length * size * 1.16 };
 }
-export async function renderSign(canvas, design, gallery, dpi = 150) {
+export async function renderSign(canvas, design, gallery, dpi = 150, environment = {}) {
   const size = SIZES[design.sizeId];
   const selected = gallery.find(item => item.id === design.imageId && item.approved === true);
+  const imageLoader=environment.loadImage||loadImage;
+  const fontsReady=environment.fontsReady||(()=>Promise.all([
+    document.fonts.load('800 55px Mulish'),document.fonts.load('700 20px Mulish'),
+    document.fonts.load('400 20px Mulish'),document.fonts.load('italic 400 26px Mulish'),
+  ]));
   const [photo, leaf] = await Promise.all([
-    selected ? loadImage(selected.src) : Promise.resolve(null), loadImage('assets/template-leaf.png'),
-    document.fonts.load('800 55px Mulish'), document.fonts.load('700 20px Mulish'),
-    document.fonts.load('400 20px Mulish'), document.fonts.load('italic 400 26px Mulish'),
+    selected ? imageLoader(selected.src) : Promise.resolve(null),imageLoader('assets/template-leaf.png'),fontsReady(),
   ]);
   canvas.width = Math.round(size.width * dpi); canvas.height = Math.round(size.height * dpi);
   const ctx = canvas.getContext('2d', { willReadFrequently: true });

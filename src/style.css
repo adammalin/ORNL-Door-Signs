@@ -12,3 +12,13 @@
 @media(max-width:1150px){.page-shell{width:calc(100% - 48px)}.studio-layout{grid-template-columns:minmax(290px,350px) minmax(0,1fr);gap:22px}.panel-section,.preview-panel{padding:23px}.intro{align-items:start}.document-actions{flex-direction:column}.range-grid{gap:12px}.range-field{font-size:13px}.range-field>span{flex-wrap:wrap}.field-row{gap:10px}.preview-stage{padding:16px}}
 @media(max-width:800px){.brand-rail{width:5px}.site-header{min-height:64px;padding:0 22px}.header-note{font-size:11px}.wordmark{font-size:18px}.page-shell{width:calc(100% - 32px);max-width:650px}.intro{display:block;padding:36px 0 26px}.intro-copy{font-size:16px}.document-actions{flex-direction:row;margin-top:22px}.document-actions button{flex:1}.studio-layout{display:flex;flex-direction:column;gap:24px;padding-bottom:48px}.controls-panel,.preview-panel{width:100%}.preview-panel{position:static;order:-1}.panel-section,.preview-panel{padding:22px}.preview-heading{margin-bottom:16px}.range-grid{gap:18px}.preview-bottom{align-items:start}.site-footer{font-size:12px;flex-wrap:wrap;padding:24px}.canvas-help{font-size:12px}.field-row{grid-template-columns:1fr 1fr}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+.tutorial-dialog{position:fixed;inset:auto 24px 24px auto;margin:0;width:min(460px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto;padding:26px;border:2px solid var(--ornl-green);border-radius:0;background:var(--ornl-polar);color:var(--ornl-dark-matter);box-shadow:8px 8px 0 color-mix(in srgb,var(--ornl-hale-navy) 16%,transparent)}
+.tutorial-dialog::backdrop{background:color-mix(in srgb,var(--ornl-hale-navy) 28%,transparent)}
+.tutorial-dialog.tour-left{left:24px;right:auto}.tutorial-dialog.tour-top{top:24px;bottom:auto}
+.tutorial-top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px;color:var(--muted);font-size:13px}
+.tutorial-dialog h2{margin-bottom:14px;color:var(--ornl-hale-navy);font-size:25px;line-height:1.2;letter-spacing:-.03em}
+.tutorial-dialog p{font-size:16px;line-height:1.65;margin-bottom:24px}
+.tutorial-actions{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.tutorial-target{outline:4px solid var(--ornl-forge);outline-offset:6px}
+.agent-status{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line);color:var(--ornl-green)}
+@media(max-width:800px){.tutorial-dialog,.tutorial-dialog.tour-left{left:16px;right:auto;bottom:16px;padding:22px}.tutorial-dialog.tour-top{top:16px;bottom:auto}.document-actions{flex-wrap:wrap}.document-actions .button{padding:10px 13px}.range-grid .range-field>span{display:grid;gap:4px;min-height:38px}}

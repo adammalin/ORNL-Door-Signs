@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULT_DESIGN, SIZES, clone, validateDesign, filterGallery, cropGeometry, effectiveDpi, fileStem } from '../src/model.js';
+import { DEFAULT_DESIGN, SIZES, clone, validateDesign, patchDesign, filterGallery, cropGeometry, effectiveDpi, fileStem } from '../src/model.js';
 import { readFileSync } from 'node:fs';
 const gallery=JSON.parse(readFileSync(new URL('../assets/gallery.json',import.meta.url),'utf8'));
 
@@ -16,6 +16,10 @@ test('documents reject unsupported schema, unknown sizes, invalid crops, and una
   // Imported arbitrary URLs and HTML never become DOM or image sources.
   const extra={...clone(DEFAULT_DESIGN),src:'https://example.invalid/tracker',injected:'<script>bad</script>'};
   assert.equal('src' in validateDesign(extra,gallery),false);
+});
+test('control patches reject invalid objects and unknown nested crop settings',()=>{
+  for(const patch of [[],null,{crop:'text'},{crop:[]},{crop:{imageUrl:'https://example.invalid'}},{src:'https://example.invalid'}])assert.throws(()=>patchDesign(clone(DEFAULT_DESIGN),patch,gallery));
+  assert.deepEqual(patchDesign(clone(DEFAULT_DESIGN),{crop:{x:12}},gallery).crop,{x:12,y:50,zoom:1});
 });
 test('gallery search combines terms, category and science area and excludes pending images',()=>{
   const samples=[...gallery,{...gallery[0],id:'not-approved',title:'Secret',approved:false}];

@@ -23,7 +23,7 @@
     <section class="intro" aria-labelledby="page-title">
       <div><p class="eyebrow">Your space. Your sign.</p><h1 id="page-title">Make it <span>yours.</span></h1>
       <p class="intro-copy">Edit your details, choose an approved image, and create a door sign that’s ready to print.</p></div>
-      <div class="document-actions"><button id="open-json" class="button secondary">Open design</button><button id="save-json" class="button secondary" disabled>Save JSON</button><input id="json-file" type="file" accept=".json,application/json" hidden></div>
+      <div class="document-actions"><button id="show-tutorial" class="button secondary">Tutorial</button><button id="open-json" class="button secondary">Open design</button><button id="save-json" class="button secondary" disabled>Save JSON</button><input id="json-file" type="file" accept=".json,application/json" hidden></div>
     </section>
     <noscript><p class="message">Door Sign Studio needs JavaScript enabled to edit and export a sign.</p></noscript>
     <div id="startup-error" class="message error" role="alert" hidden></div>
@@ -62,6 +62,7 @@
         <p id="download-ready" class="download-ready" hidden><a id="download-link">Save prepared file</a><span>If your download didn’t start, use this link.</span></p>
         <p class="print-note">Print the PDF at <strong>Actual size / 100%</strong>. RGB artwork, no bleed or crop marks. Review the sign before printing.</p>
         <div class="preview-bottom"><span id="save-status">Draft autosaves on this device</span><button id="reset-design" class="text-button">New design</button></div>
+        <p id="agent-status" class="hint agent-status" role="status" hidden></p>
       </section>
     </div>
   </main>

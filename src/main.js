@@ -1,12 +1,17 @@
 import { DEFAULT_DESIGN, SIZES, clone, validateDesign, filterGallery, cropGeometry, fileStem } from './model.js';
 import { renderSign, loadImage, PHOTO_BOX } from './render.js';
 import { pngWithDpi, canvasPdf } from './print.js';
+import { createTutorial } from './tutorial.js';
+import { connectCompanion } from './companion.js';
+import { registerBrowserTools } from './browser-tools.js';
 
 const $ = id => document.getElementById(id);
 const STORAGE = 'ornl-door-signs-v1';
 let gallery = [], design = clone(DEFAULT_DESIGN), history = [], future = [];
 let renderVersion = 0, ready = false, exportBusy = false, toastTimer, editTime = 0, editKey = '', downloadUrl;
 let latestQuality = { warnings: ['Preparing canvas'], photoDpi: null };
+let tutorial;
+let companion;
 const fields = ['organization','title','subtitle','details','room'];
 
 function toast(message) {
@@ -15,6 +20,7 @@ function toast(message) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').classList.remove('visible'),6500);
 }
 function saveLocal() {
+  companion?.save(clone(design));
   try { localStorage.setItem(STORAGE, JSON.stringify(design)); $('save-status').textContent = 'Draft saved on this device'; }
   catch { $('save-status').textContent = 'Autosave unavailable · save a JSON copy'; }
 }
@@ -105,11 +111,12 @@ function updateGallery() {
     const check = document.createElement('span'); check.className='gallery-check'; check.textContent='✓'; check.setAttribute('aria-hidden','true');
     button.append(image,name,category,check);
     button.addEventListener('click', () => {
-      setDesign({...clone(design),imageId:item.id,crop:{x:50,y:50,zoom:1}});
+      setDesign({...clone(design),imageId:item.id,crop:clone(item.defaultCrop||{x:50,y:50,zoom:1})});
     });
     $('gallery').append(button);
   }
   syncControls();
+  companion?.filters({query:$('image-search').value,category:$('category').value,scienceArea:$('science-area').value});
 }
 function download(blob,name) {
   if(downloadUrl)URL.revokeObjectURL(downloadUrl);
@@ -136,11 +143,20 @@ async function exportArtwork(format) {
     }
     download(blob,`${fileStem(snapshot.title)}.${format}`);
     toast(`${format.toUpperCase()} ready. If the download didn’t start, use the save link below the export buttons.`);
-  } catch(error) { toast(error.message); }
+    return {format,...getDownload()};
+  } catch(error) { toast(error.message); return {error:error.message}; }
   finally { label.textContent=`Download ${format.toUpperCase()}`; exportBusy=false; exportButtons(); }
 }
 
+function getDownload(){return {filename:$('download-link').download,url:$('download-link').href};}
+function getEditorState(){return {design:clone(design),quality:clone(latestQuality),ready,exportBusy,canUndo:history.length>0,canRedo:future.length>0,filters:{query:$('image-search').value,category:$('category').value,scienceArea:$('science-area').value},tutorial:tutorial.getState()};}
+function applyFilters(view){
+  for(const [key,id] of [['query','image-search'],['category','category'],['scienceArea','science-area']])if(view[key]!==undefined)$(id).value=view[key];updateGallery();
+}
+function applyTutorial({action,step}){if(action==='start')tutorial.start({step});else if(['next','back','close'].includes(action))tutorial[action]();}
+
 function bindEvents() {
+  $('show-tutorial').addEventListener('click',()=>tutorial.start());
   fields.forEach(key=>$(key).addEventListener('input',()=>setDesign({...clone(design),[key]:$(key).value},key,true)));
   $('sign-size').addEventListener('change',()=>setDesign({...clone(design),sizeId:$('sign-size').value}));
   $('title-size').addEventListener('input',()=>setDesign({...clone(design),titleSize:Number($('title-size').value)},'title-size',true));
@@ -237,7 +253,18 @@ async function start() {
     for(const [id,values] of [['category',gallery.map(i=>i.category)],['science-area',gallery.flatMap(i=>i.scienceAreas)]]) {
       for(const value of [...new Set(values)].sort()) {const option=document.createElement('option');option.value=value;option.textContent=value;$(id).append(option);}
     }
+    tutorial=createTutorial();
     syncControls(); updateGallery(); bindEvents(); await requestRender();
+    companion=await connectCompanion({
+      applyDesign:async next=>{setDesign(validateDesign(next,gallery));await requestRender();},applyView:applyFilters,applyTutorial,
+      onConflict:toast,onStatus:message=>{$('agent-status').hidden=false;$('agent-status').textContent=message;},
+    });
+    registerBrowserTools({getDesign:()=>clone(design),getGallery:()=>clone(gallery),getState:getEditorState,
+      setDesign:async next=>{setDesign(next);await requestRender();},setFilters:applyFilters,render:requestRender,tutorial,getDownload,
+      newDesign:()=>$('reset-design').click(),undo:()=>$('undo').click(),redo:()=>$('redo').click(),saveJson:()=>$('save-json').click(),
+      export:async format=>{if(!ready||exportBusy||latestQuality.warnings.length||latestQuality.photoDpi<300)throw new Error('Resolve the print checks before exporting.');const result=await exportArtwork(format);if(result?.error)throw new Error(result.error);return result;},
+    });
+    if(ready)tutorial.start({automatic:true});
   } catch(error) {
     $('startup-error').hidden=false; $('startup-error').textContent=error.message;
     $('quality').textContent='The editor could not start. Reload the page to try again.';

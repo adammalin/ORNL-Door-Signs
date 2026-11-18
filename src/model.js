@@ -10,6 +10,16 @@ export const DEFAULT_DESIGN = Object.freeze({
 });
 export const clone = (value) => JSON.parse(JSON.stringify(value));
 const limits = { organization: 100, title: 100, subtitle: 120, details: 160, room: 30 };
+export function patchDesign(current, patch, gallery) {
+  if(!patch||typeof patch!=='object'||Array.isArray(patch))throw new Error('A design patch must be an object.');
+  const allowed=[...Object.keys(limits),'sizeId','titleSize','imageId','crop'];
+  for(const key of Object.keys(patch))if(!allowed.includes(key))throw new Error(`Unknown editable property: ${key}`);
+  if(Object.hasOwn(patch,'crop')){
+    if(!patch.crop||typeof patch.crop!=='object'||Array.isArray(patch.crop))throw new Error('Crop must be an object.');
+    for(const key of Object.keys(patch.crop))if(!['x','y','zoom'].includes(key))throw new Error(`Unknown crop property: ${key}`);
+  }
+  return validateDesign({...current,...patch,crop:{...current.crop,...patch.crop}},gallery);
+}
 export function validateDesign(input, gallery) {
   if (!input || typeof input !== 'object' || Array.isArray(input) ||
       input.app !== 'ornl-door-signs' || input.version !== 1) {
@@ -44,7 +54,7 @@ export function filterGallery(gallery, query = '', category = '', scienceArea = 
   return gallery.filter(item => item.approved === true &&
     (!category || item.category === category) &&
     (!scienceArea || item.scienceAreas.includes(scienceArea)) &&
-    words.every(word => [item.title, item.alt, item.category, ...item.scienceAreas, ...item.tags]
+    words.every(word => [item.title, item.alt, item.description||'', item.category, ...(item.categories||[]), ...item.scienceAreas, ...item.tags]
       .join(' ').toLocaleLowerCase().includes(word)));
 }
 export function cropGeometry(imageWidth, imageHeight, boxWidth, boxHeight, crop) {
