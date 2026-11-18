@@ -138,7 +138,7 @@ export class DoorSignWorkspace {
   async imagePicker({action,id=this.state.activeId}) {
     if(!['open','close','use_default'].includes(action))throw new Error('Invalid image picker action.');
     const design=this.get(id).design;
-    if(action!=='close'&&(designSize(design).imageDisabled||!design.showImage))throw new Error('This template has no visible image.');
+    if(action!=='close'&&(designSize(design).imageDisabled||design.showImage===false))throw new Error('This template has no visible image.');
     if(action==='use_default')await this.update({id,patch:{imageId:defaultImage(this.gallery).id,crop:{x:50,y:50,zoom:1}}});
     await this.view({galleryOpen:action==='open'});return this.session();
   }

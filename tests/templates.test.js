@@ -12,6 +12,7 @@ test('old saved documents gain optional controls without changing the medium des
  const opened=validateDesign(legacy,w.gallery);
  assert.equal(opened.showSubtitle,true);assert.equal(opened.showImage,true);assert.deepEqual(opened.entries,[]);
  assert.equal(opened.sizeId,'medium-landscape');assert.equal(opened.titleSize,55);
+ const active=w.state.designs[w.state.activeId];delete active.design.showImage;await w.imagePicker({action:'open'});assert.equal(w.session().view.galleryOpen,true);
  const small=patchDesign(opened,{sizeId:'small-room'},w.gallery);assert.equal(small.titleSize,84);
  assert.equal(patchDesign(small,{sizeId:'medium-landscape'},w.gallery).titleSize,55);
  assert.throws(()=>patchDesign(small,{showSubtitle:'false'},w.gallery),/visibility/);
