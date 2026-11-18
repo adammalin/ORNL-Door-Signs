@@ -26,3 +26,6 @@
 /* Keep the curated image browser within reach of its filters. */
 .gallery{max-height:34rem;overflow-y:auto;overscroll-behavior:contain;padding:4px;scrollbar-gutter:stable}
 @media(max-width:800px){.gallery{max-height:26rem}}
+.checkbox-field{display:flex;align-items:center;gap:10px;margin:0 0 16px;color:var(--ornl-hale-navy);font-size:14px;font-weight:800;cursor:pointer}.checkbox-field input{width:18px;height:18px;accent-color:var(--ornl-green)}
+.entry-editor{border-top:1px solid var(--line);padding-top:18px;margin-top:18px}.entry-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;color:var(--ornl-hale-navy);font-size:14px}.entry-heading>div{display:flex;gap:4px}.entry-heading .tool-button{padding:7px 8px}.entry-editor .field-row .field{margin-bottom:8px}.portrait-preview .preview-stage canvas{width:min(100%,calc(74vh * 11 / 17));margin-inline:auto}
+@media(max-width:400px){.entry-heading{align-items:flex-start;flex-direction:column}}

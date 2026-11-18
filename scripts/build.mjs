@@ -3,7 +3,7 @@ import path from 'node:path';
 const root=path.resolve(import.meta.dirname,'..'), dist=path.join(root,'dist');
 await rm(dist,{recursive:true,force:true});
 await mkdir(path.join(dist,'assets/gallery'),{recursive:true});
-for(const name of ['index.html','src','assets/fonts','assets/ornl-design-tokens.css','assets/favicon.svg','assets/template-leaf.png']) {
+for(const name of ['index.html','src','assets/fonts','assets/ornl-design-tokens.css','assets/favicon.svg','assets/template-leaf.png','assets/template-logo.png','assets/template-hexagons.png']) {
   await cp(path.join(root,name),path.join(dist,name),{recursive:true});
 }
 const gallery=JSON.parse(await readFile(path.join(root,'assets/gallery.json'),'utf8'));

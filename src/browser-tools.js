@@ -6,7 +6,7 @@ export function registerBrowserTools(api) {
   if(typeof registry?.registerTool!=='function')return ()=>{};
   const lifecycle=new AbortController();
   const string={type:'string'},number={type:'number'};
-  const patchProperties={organization:string,title:string,subtitle:string,details:string,room:string,sizeId:string,imageId:string,titleSize:number,crop:{type:'object',properties:{x:number,y:number,zoom:number},additionalProperties:false}};
+  const patchProperties={organization:string,title:string,subtitle:string,showSubtitle:{type:'boolean'},showImage:{type:'boolean'},entries:{type:'array',maxItems:12,items:{type:'object',properties:{name:string,subname:string,style:{enum:['primary','standard','assistant'],type:'string'},align:{enum:['left','right'],type:'string'}},required:['name','subname'],additionalProperties:false}},details:string,room:string,sizeId:string,imageId:{type:['string','null']},titleSize:number,crop:{type:'object',properties:{x:number,y:number,zoom:number},additionalProperties:false}};
   const schema=(properties={},required=[])=>({type:'object',properties,required,additionalProperties:false});
   const tool=(name,description,inputSchema,execute,readOnly=false)=>{
     const handler=async args=>{
@@ -34,7 +34,7 @@ export function registerBrowserTools(api) {
   tool('door_sign_set_gallery_filters','Set the visible gallery search, category and science-area filters.',schema({query:string,category:string,scienceArea:string}),args=>{
     if(!Object.values(args).every(v=>typeof v==='string'))throw new Error('Filters must be strings.');api.setFilters(args);return api.getState();
   });
-  tool('door_sign_update','Edit any visible design control, including all text, size, title size, approved image and crop.',schema({patch:schema(patchProperties)},['patch']),({patch})=>update(patch));
+  tool('door_sign_update','Edit any visible design control, including all text, template, subtitle/image visibility, name entries and their order/style/alignment, title size, approved image and crop.',schema({patch:schema(patchProperties)},['patch']),({patch})=>update(patch));
   tool('door_sign_select_image','Select one approved image and apply its recommended crop.',schema({imageId:string},['imageId']),({imageId})=>{
     const image=api.getGallery().find(i=>i.id===imageId&&i.approved===true);if(!image)throw new Error('Unknown approved image ID.');return update({imageId,crop:image.defaultCrop||{x:50,y:50,zoom:1}});
   });

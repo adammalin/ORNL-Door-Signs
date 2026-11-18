@@ -1,5 +1,5 @@
-import { DEFAULT_DESIGN, SIZES, clone, validateDesign, filterGallery, cropGeometry, fileStem } from './model.js';
-import { renderSign, loadImage, PHOTO_BOX } from './render.js';
+import { DEFAULT_DESIGN, SIZES, clone, defaultDesign, patchDesign, validateDesign, filterGallery, cropGeometry, effectiveDpi, fileStem } from './model.js';
+import { renderSign, loadImage } from './render.js';
 import { pngWithDpi, canvasPdf } from './print.js';
 import { createTutorial } from './tutorial.js';
 import { connectCompanion } from './companion.js';
@@ -14,6 +14,34 @@ let tutorial;
 let companion;
 const fields = ['organization','title','subtitle','details','room'];
 
+function syncEntries(){
+  const entries=design.entries||[],container=$('entries');
+  if(container.children.length!==entries.length){
+    container.replaceChildren();
+    entries.forEach((entry,index)=>{
+      const row=document.createElement('div');row.className='entry-editor';
+      row.innerHTML=`<div class="entry-heading"><strong>Name ${index+1}</strong><div><button type="button" class="tool-button" data-action="up" aria-label="Move name ${index+1} up">Up</button><button type="button" class="tool-button" data-action="down" aria-label="Move name ${index+1} down">Down</button><button type="button" class="tool-button" data-action="remove" aria-label="Remove name ${index+1}">Remove</button></div></div><label class="field">Name<input type="text" id="entry-${index}-name" data-entry="name" maxlength="100"></label><label class="field">Sub-name / role<input type="text" id="entry-${index}-subname" data-entry="subname" maxlength="160"></label><div class="field-row"><label class="field">Name style<select data-entry="style"><option value="primary">Primary</option><option value="standard">Standard</option><option value="assistant">Assistant</option></select></label><label class="field">Alignment<select data-entry="align"><option value="left">Left</option><option value="right">Right</option></select></label></div>`;
+      for(const input of row.querySelectorAll('[data-entry]'))input.addEventListener(input.tagName==='SELECT'?'change':'input',()=>{
+        const next=clone(design);next.entries[index][input.dataset.entry]=input.value;setDesign(next,`entry-${index}-${input.dataset.entry}`,true);
+      });
+      for(const button of row.querySelectorAll('[data-action]'))button.addEventListener('click',()=>{
+        const next=clone(design),action=button.dataset.action;
+        if(action==='remove')next.entries.splice(index,1);
+        else{const target=index+(action==='up'?-1:1);if(target<0||target>=next.entries.length)return;[next.entries[index],next.entries[target]]=[next.entries[target],next.entries[index]];}
+        setDesign(next);
+      });
+      container.append(row);
+    });
+  }
+  entries.forEach((entry,index)=>{
+    const row=container.children[index];
+    for(const input of row.querySelectorAll('[data-entry]'))if(input.value!==entry[input.dataset.entry])input.value=entry[input.dataset.entry];
+    row.querySelector('[data-action=up]').disabled=index===0;
+    row.querySelector('[data-action=down]').disabled=index===entries.length-1;
+  });
+  $('add-entry').disabled=entries.length>=12;
+}
+
 function toast(message) {
   $('toast').textContent = message;
   $('toast').classList.add('visible');
@@ -25,8 +53,25 @@ function saveLocal() {
   catch { $('save-status').textContent = 'Autosave unavailable · save a JSON copy'; }
 }
 function syncControls() {
+  const size=SIZES[design.sizeId],small=design.sizeId==='small-room';
+  const large=Boolean(size.imageOptional);
   fields.forEach(key => { if ($(key).value !== design[key]) $(key).value = design[key]; });
+  for(const key of ['organization','details','room'])$(key).closest('label').hidden=!size.fields.includes(key);
+  $('show-subtitle').checked=design.showSubtitle!==false;
+  $('subtitle-field').hidden=design.showSubtitle===false;
+  $('subtitle-label').textContent=small?'Subtitle / room':'Subtitle / role';
+  $('entries-section').hidden=!large;syncEntries();
+  $('image-toggle-field').hidden=!large;$('show-image').checked=design.showImage!==false;
+  $('image-hidden-hint').hidden=design.showImage!==false;
+  $('crop-controls').hidden=design.showImage===false;
+  document.querySelector('.preview-panel').classList.toggle('portrait-preview',large);
   $('sign-size').value = design.sizeId;
+  $('title-size').max=size.titleMax;
+  $('size-hint').textContent=`${size.width} × ${size.height} in · ${size.dpi} dpi`;
+  $('preview-size').textContent=`${size.width} × ${size.height} in`;
+  $('png-spec').textContent=`${Math.round(size.width*size.dpi)} × ${Math.round(size.height*size.dpi)} px · ${size.dpi} dpi`;
+  $('pdf-spec').textContent=`${size.width} × ${size.height} in · print size`;
+  $('text-hint').textContent=small?'Title and optional subtitle fit on one line each.':large?'Use line breaks in the heading. Add and arrange names below.':'Long text fits automatically. Use a line break to choose where it wraps.';
   $('title-size').value = design.titleSize;
   $('title-size-value').textContent = `${design.titleSize} · auto-fit`;
   for (const key of ['x','y','zoom']) {
@@ -36,10 +81,13 @@ function syncControls() {
   $('undo').disabled = !history.length;
   $('redo').disabled = !future.length;
   const item = gallery.find(item => item.id === design.imageId);
-  $('selected-image').textContent = item?.title || 'Choose a gallery image';
+  $('selected-image').textContent = (item?.title || 'Choose a gallery image')+(design.showImage===false?' · hidden':'');
   for (const button of $('gallery').querySelectorAll('[data-image-id]')) {
     const selected = button.dataset.imageId === design.imageId;
     button.setAttribute('aria-pressed', String(selected));
+    const photo=gallery.find(i=>i.id===button.dataset.imageId),b=size.photoBox;
+    const low=design.showImage!==false&&photo.pixels&&effectiveDpi(...photo.pixels,b.width/100,b.height/100,(photo.defaultCrop?.zoom||1))<300;
+    button.querySelector('small').textContent=photo.category+(low?' · needs larger original':'');
     button.querySelector('.gallery-check').hidden = !selected;
   }
 }
@@ -54,7 +102,7 @@ function setDesign(next, key = '', coalesce = false) {
   saveLocal(); syncControls(); requestRender();
 }
 function exportButtons() {
-  const blocked = !ready || exportBusy || latestQuality.warnings.length > 0 || latestQuality.photoDpi < 300;
+  const blocked = !ready || exportBusy || latestQuality.warnings.length > 0 || (latestQuality.imageVisible!==false&&latestQuality.photoDpi < 300);
   $('export-png').disabled = blocked; $('export-pdf').disabled = blocked;
   $('save-json').disabled = !ready || exportBusy;
 }
@@ -69,7 +117,7 @@ async function requestRender() {
     const canvas = $('sign-canvas');
     canvas.width = buffer.width; canvas.height = buffer.height;
     canvas.getContext('2d').drawImage(buffer,0,0);
-    canvas.setAttribute('aria-label', `Door sign: ${design.organization}. ${design.title}. ${design.subtitle}. ${design.details}. ${design.room}. Photo: ${gallery.find(i => i.id === design.imageId)?.alt || 'none'}. Click text to edit; drag the photo to reframe.`);
+    canvas.setAttribute('aria-label', `Door sign: ${SIZES[design.sizeId].fields.filter(f=>f!=='subtitle'||design.showSubtitle!==false).map(f=>design[f]).filter(Boolean).join('. ')}. ${SIZES[design.sizeId].imageOptional?(design.entries||[]).map(e=>[e.name,e.subname].filter(Boolean).join(', ')).join('. '):''} Photo: ${design.showImage===false?'hidden':gallery.find(i => i.id === design.imageId)?.alt || 'none'}. Click text to edit; drag the photo to reframe.`);
     latestQuality = quality; ready = true;
     const qualityBox = $('quality'); qualityBox.replaceChildren();
     const heading = document.createElement('strong'), text = document.createElement('p');
@@ -77,12 +125,13 @@ async function requestRender() {
     if (quality.warnings.length) {
       qualityBox.classList.add('error'); heading.textContent = 'A little adjustment needed';
       text.textContent = quality.warnings.join(' ');
-    } else if (quality.photoDpi < 300) {
+    } else if (quality.imageVisible!==false&&quality.photoDpi < 300) {
       qualityBox.classList.add('warning'); heading.textContent = 'Reduce image zoom for print';
-      text.textContent = `Photo resolution is ${quality.photoDpi} dpi at this crop. Zoom out until it reaches at least 300 dpi to enable print exports.`;
+      text.textContent = `Photo resolution is ${quality.photoDpi} dpi at this crop. `+(quality.photoDpi*design.crop.zoom<300?`Choose a higher-resolution image${SIZES[design.sizeId].imageOptional?' or turn off Show image':''} to enable print exports.`:'Zoom out until it reaches at least 300 dpi to enable print exports.');
     } else {
       heading.textContent = 'Ready to export at 300 dpi';
-      text.textContent = `2550 × 1500 pixels · photo ${quality.photoDpi} dpi at this crop. Review your content before printing.`;
+      const size=SIZES[design.sizeId];
+      text.textContent = `${Math.round(size.width*size.dpi)} × ${Math.round(size.height*size.dpi)} pixels · ${quality.imageVisible===false?'image hidden':`photo ${quality.photoDpi} dpi at this crop`}. Review your content before printing.`;
     }
     qualityBox.append(heading,text); exportButtons();
   } catch (error) {
@@ -132,7 +181,7 @@ async function exportArtwork(format) {
   try {
     const snapshot=clone(design), canvas=document.createElement('canvas'), size=SIZES[snapshot.sizeId];
     const quality=await renderSign(canvas,snapshot,gallery,size.dpi);
-    if (quality.warnings.length || quality.photoDpi < 300) throw new Error('Resolve the canvas print checks before exporting.');
+    if (quality.warnings.length || (quality.imageVisible!==false&&quality.photoDpi < 300)) throw new Error('Resolve the canvas print checks before exporting.');
     let blob;
     if (format==='png') {
       const raw=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('PNG export failed.')),'image/png'));
@@ -141,7 +190,7 @@ async function exportArtwork(format) {
       if (typeof CompressionStream==='undefined') throw new Error('PDF export needs a current version of Chrome, Edge, Firefox, or Safari.');
       blob=await canvasPdf(canvas,size);
     }
-    download(blob,`${fileStem(snapshot.title)}.${format}`);
+    download(blob,`${fileStem(snapshot.title,snapshot.sizeId)}.${format}`);
     toast(`${format.toUpperCase()} ready. If the download didn’t start, use the save link below the export buttons.`);
     return {format,...getDownload()};
   } catch(error) { toast(error.message); return {error:error.message}; }
@@ -158,7 +207,24 @@ function applyTutorial({action,step}){if(action==='start')tutorial.start({step})
 function bindEvents() {
   $('show-tutorial').addEventListener('click',()=>tutorial.start());
   fields.forEach(key=>$(key).addEventListener('input',()=>setDesign({...clone(design),[key]:$(key).value},key,true)));
-  $('sign-size').addEventListener('change',()=>setDesign({...clone(design),sizeId:$('sign-size').value}));
+  $('sign-size').addEventListener('change',()=>{
+    const sizeId=$('sign-size').value,next=patchDesign(design,{sizeId},gallery);
+    if(sizeId==='small-room'&&design.title===DEFAULT_DESIGN.title&&design.subtitle===DEFAULT_DESIGN.subtitle){const preset=defaultDesign(sizeId);Object.assign(next,{title:preset.title,subtitle:preset.subtitle,showSubtitle:preset.showSubtitle});}
+    if(SIZES[sizeId].imageOptional){
+      const preset=defaultDesign(sizeId);
+      if(!SIZES[design.sizeId].imageOptional)Object.assign(next,{title:preset.title,subtitle:preset.subtitle,showSubtitle:preset.showSubtitle,showImage:preset.showImage,entries:preset.entries});
+      else{
+        const previous=defaultDesign(design.sizeId);
+        if(design.title===previous.title)Object.assign(next,{title:preset.title,subtitle:preset.subtitle,showSubtitle:preset.showSubtitle});
+        if(JSON.stringify(design.entries)===JSON.stringify(previous.entries))next.entries=preset.entries;
+        if(design.showImage===previous.showImage)next.showImage=preset.showImage;
+      }
+    }
+    setDesign(next);
+  });
+  $('show-subtitle').addEventListener('change',()=>setDesign({...clone(design),showSubtitle:$('show-subtitle').checked}));
+  $('show-image').addEventListener('change',()=>setDesign(patchDesign(design,{showImage:$('show-image').checked},gallery)));
+  $('add-entry').addEventListener('click',()=>{if((design.entries||[]).length>=12)return;const next=clone(design);next.entries=[...(next.entries||[]),{name:'',subname:'',style:'primary',align:'left'}];setDesign(next);$(`entry-${next.entries.length-1}-name`).focus();});
   $('title-size').addEventListener('input',()=>setDesign({...clone(design),titleSize:Number($('title-size').value)},'title-size',true));
   for(const key of ['x','y','zoom']) $(`crop-${key}`).addEventListener('input',()=>{
     const next=clone(design); next.crop[key]=Number($(`crop-${key}`).value); setDesign(next,`crop-${key}`,true);
@@ -173,7 +239,7 @@ function bindEvents() {
     editKey=''; saveLocal(); syncControls(); requestRender();
   });
   $('reset-design').addEventListener('click',()=>{
-    const next=clone(DEFAULT_DESIGN); next.imageId=gallery[0]?.id || null;
+    const next=defaultDesign(design.sizeId); next.imageId=gallery[0]?.id || null;
     setDesign(next); toast('Started a new design. Use Undo to restore your previous draft.');
   });
   for(const id of ['image-search','category','science-area']) $(id).addEventListener(id==='image-search'?'input':'change',updateGallery);
@@ -181,7 +247,7 @@ function bindEvents() {
     $('image-search').value=''; $('category').value=''; $('science-area').value=''; updateGallery();
   });
   $('save-json').addEventListener('click',()=>{
-    download(new Blob([JSON.stringify(design,null,2)+'\n'],{type:'application/json'}),`${fileStem(design.title)}.json`);
+    download(new Blob([JSON.stringify(design,null,2)+'\n'],{type:'application/json'}),`${fileStem(design.title,design.sizeId)}.json`);
     toast('Editable JSON ready. Use Open design to continue later.');
   });
   $('open-json').addEventListener('click',()=>$('json-file').click());
@@ -197,24 +263,24 @@ function bindEvents() {
   $('export-png').addEventListener('click',()=>exportArtwork('png'));
   $('export-pdf').addEventListener('click',()=>exportArtwork('pdf'));
   const canvas=$('sign-canvas'); let drag=null;
-  const point=event=>{const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*850/rect.width,y:(event.clientY-rect.top)*500/rect.height};};
+  const point=event=>{const rect=canvas.getBoundingClientRect(),size=SIZES[design.sizeId];return{x:(event.clientX-rect.left)*size.width*100/rect.width,y:(event.clientY-rect.top)*size.height*100/rect.height};};
   canvas.addEventListener('pointerdown',async event=>{
     if(event.button!==0||!ready)return;
-    const p=point(event), b=PHOTO_BOX;
+    const p=point(event), b=SIZES[design.sizeId].photoBox;
     const hit=latestQuality.hitRegions?.find(r=>p.x>=r.x&&p.x<=r.x+r.width&&p.y>=r.y&&p.y<=r.y+r.height);
-    if(hit){$(hit.field).focus();$(hit.field).select();return;}
-    if(p.x>=b.x && p.x<=b.x+b.width && p.y>=b.y && p.y<=b.y+b.height) {
+    if(hit){event.preventDefault();const input=hit.field==='entries'?$(`entry-${hit.entryIndex}-${hit.entryPart}`):$(hit.field);input.focus();input.select();return;}
+    if(design.showImage!==false&&p.x>=b.x && p.x<=b.x+b.width && p.y>=b.y && p.y<=b.y+b.height) {
       const item=gallery.find(i=>i.id===design.imageId); if(!item)return;
       const initial=clone(design), photo=await loadImage(item.src);
       // Ignore a pointer already released while an asset was loading.
       if(event.buttons!==1)return;
-      drag={point:p,initial,geometry:cropGeometry(photo.naturalWidth,photo.naturalHeight,b.width,b.height,initial.crop)};
+      drag={point:p,initial,box:b,geometry:cropGeometry(photo.naturalWidth,photo.naturalHeight,b.width,b.height,initial.crop)};
       canvas.setPointerCapture(event.pointerId); canvas.classList.add('is-dragging');
     }
   });
   canvas.addEventListener('pointermove',event=>{
-    if(!drag)return; const p=point(event),next=clone(drag.initial),g=drag.geometry;
-    const overflowX=g.width-PHOTO_BOX.width, overflowY=g.height-PHOTO_BOX.height;
+    if(!drag)return;if(design.sizeId!==drag.initial.sizeId){stopDrag();return;} const p=point(event),next=clone(drag.initial),g=drag.geometry;
+    const overflowX=g.width-drag.box.width, overflowY=g.height-drag.box.height;
     next.crop.x=overflowX>0?Math.max(0,Math.min(100,drag.initial.crop.x-(p.x-drag.point.x)/overflowX*100)):50;
     next.crop.y=overflowY>0?Math.max(0,Math.min(100,drag.initial.crop.y-(p.y-drag.point.y)/overflowY*100)):50;
     setDesign(next,'drag-crop',true);
@@ -222,6 +288,7 @@ function bindEvents() {
   const stopDrag=()=>{drag=null;canvas.classList.remove('is-dragging');};
   canvas.addEventListener('pointerup',stopDrag); canvas.addEventListener('pointercancel',stopDrag); canvas.addEventListener('lostpointercapture',stopDrag);
   canvas.addEventListener('keydown',event=>{
+    if(design.showImage===false)return;
     if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;
     event.preventDefault(); const next=clone(design),step=event.shiftKey?5:1;
     const axis=event.key==='ArrowLeft'||event.key==='ArrowRight'?'x':'y';
@@ -254,6 +321,7 @@ async function start() {
       for(const value of [...new Set(values)].sort()) {const option=document.createElement('option');option.value=value;option.textContent=value;$(id).append(option);}
     }
     tutorial=createTutorial();
+    $('sign-size').replaceChildren(...Object.entries(SIZES).map(([id,size])=>{const option=document.createElement('option');option.value=id;option.textContent=size.label;return option;}));
     syncControls(); updateGallery(); bindEvents(); await requestRender();
     companion=await connectCompanion({
       applyDesign:async next=>{setDesign(validateDesign(next,gallery));await requestRender();},applyView:applyFilters,applyTutorial,
@@ -262,7 +330,7 @@ async function start() {
     registerBrowserTools({getDesign:()=>clone(design),getGallery:()=>clone(gallery),getState:getEditorState,
       setDesign:async next=>{setDesign(next);await requestRender();},setFilters:applyFilters,render:requestRender,tutorial,getDownload,
       newDesign:()=>$('reset-design').click(),undo:()=>$('undo').click(),redo:()=>$('redo').click(),saveJson:()=>$('save-json').click(),
-      export:async format=>{if(!ready||exportBusy||latestQuality.warnings.length||latestQuality.photoDpi<300)throw new Error('Resolve the print checks before exporting.');const result=await exportArtwork(format);if(result?.error)throw new Error(result.error);return result;},
+      export:async format=>{if(!ready||exportBusy||latestQuality.warnings.length||(latestQuality.imageVisible!==false&&latestQuality.photoDpi<300))throw new Error('Resolve the print checks before exporting.');const result=await exportArtwork(format);if(result?.error)throw new Error(result.error);return result;},
     });
     if(ready)tutorial.start({automatic:true});
   } catch(error) {

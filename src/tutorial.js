@@ -1,13 +1,13 @@
 export const TUTORIAL_KEY = 'ornl-door-signs-tutorial-v1';
 export const TUTORIAL_STEPS = [
-  { target: '.preview-panel', title: 'Welcome to Door Sign Studio', text: 'Create an 8.5 × 5-inch sign in a few steps. Your live canvas updates as you edit. You can close this tour at any time and reopen it with Tutorial.' },
-  { target: '#sign-size', title: 'Start with the sign size', text: 'The first template is 8.5 × 5 inches in landscape orientation. The editor keeps the canvas and print files at this exact size.' },
-  { target: '#title', title: 'Add your text', text: 'Edit the organization, title or name, role, group, and optional room. Use a line break for a two-line name. Long text fits automatically, and the title-size slider gives you more control.' },
-  { target: '.gallery-section', title: 'Find the right image', text: 'Search by subject, image description, or Canto keyword. Combine Category and Science area to narrow the approved gallery, then select an image.' },
+  { target: '.preview-panel', title: 'Welcome to Door Sign Studio', text: 'Choose a sign template and create your design in a few steps. Your live canvas updates as you edit. You can close this tour at any time and reopen it with Tutorial.' },
+  { target: '#sign-size', title: 'Start with the sign size', text: 'Choose Medium (8.5 × 5), Small room sign (8.75 × 2.5), or an 11 × 17 portrait template. The canvas and print files use the selected physical size.' },
+  { target: '#title', title: 'Add your text', text: 'Edit the organization, title or name, role, group, and optional room. Use a line break for a two-line name. Show subtitle controls the optional second line. Large templates let you add, remove and arrange names and sub-names. Long text fits automatically.' },
+  { target: '.gallery-section', title: 'Find the right image', text: 'Search by subject, image description, or Canto keyword. Combine Category and Science area to narrow the approved gallery, then select an image. Large templates also let you hide the photo with Show image.' },
   { target: '#crop-controls', title: 'Frame the photograph', text: 'Drag the photo or use Horizontal, Vertical, and Zoom to choose the crop. Arrow keys also move the crop when the canvas has focus. Reset crop and Undo make it easy to try again.' },
   { target: '#quality', title: 'Check print quality', text: 'The print check verifies text fit and the photo’s effective resolution. If the photo falls below 300 dpi, zoom out before exporting. Always review your text and the final sign.' },
   { target: '.document-actions', title: 'Save your editable design', text: 'Save JSON keeps a portable, editable copy. Open design restores it later. A draft also autosaves on this device, while New design starts another sign.' },
-  { target: '.export-actions', title: 'Download and print', text: 'Download a 300-dpi PNG or a PDF with an exact 8.5 × 5-inch page. Print the PDF at Actual size / 100%. If a download does not start, use the prepared-file save link. You’re ready to create your sign.' },
+  { target: '.export-actions', title: 'Download and print', text: 'Download a 300-dpi PNG or a PDF at the selected template’s exact print size. Print the PDF at Actual size / 100%. If a download does not start, use the prepared-file save link. You’re ready to create your sign.' },
 ];
 
 export function shouldAutoStart(storage) {

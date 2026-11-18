@@ -20,7 +20,11 @@
     ],
     "approved": true,
     "approvalNote": "Adam Malin authorized this photo for the public starter gallery on 2026-11-18.",
-    "source": "PHOTO layer in supplied ORNL-Signage_Medium-Template_8.5x5_DVCD.psd"
+    "source": "PHOTO layer in supplied ORNL-Signage_Medium-Template_8.5x5_DVCD.psd",
+    "pixels": [
+      3070,
+      2047
+    ]
   },
   {
     "id": "canto-egbfhbs3a12s53q73gbmqn1t6i",

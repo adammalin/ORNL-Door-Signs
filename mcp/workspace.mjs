@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir, rename, realpath, stat } from 'node:fs/prom
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
-import { DEFAULT_DESIGN, SIZES, clone, validateDesign, patchDesign, filterGallery, fileStem } from '../src/model.js';
+import { DEFAULT_DESIGN, SIZES, clone, defaultDesign, validateDesign, patchDesign, filterGallery, fileStem } from '../src/model.js';
 import { renderSign } from '../src/render.js';
 import { pngWithDpi, canvasPdf } from '../src/print.js';
 
@@ -23,7 +23,7 @@ export async function renderNative(design, gallery, dpi = 150) {
   const quality=await renderSign(canvas,design,gallery,dpi,{
     fontsReady:async()=>{},
     loadImage:async src=>{
-      if(!/^assets\/(gallery\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)|template-leaf\.png)$/.test(src))throw new Error('Invalid artwork path.');
+      if(!/^assets\/(gallery\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)|template-(leaf|logo|hexagons)\.png)$/.test(src))throw new Error('Invalid artwork path.');
       if(!imageCache.has(src)){
         const resolved=await realpath(path.join(PROJECT_ROOT,src));
         if(!resolved.startsWith(PROJECT_ROOT+path.sep))throw new Error('Artwork must remain inside the project.');
@@ -87,8 +87,8 @@ export class DoorSignWorkspace {
     }).sort((a,b)=>b.score-a.score||a.image.id.localeCompare(b.image.id)).slice(0,limit);
   }
   makeDesign(input={}) {
-    const design={...clone(DEFAULT_DESIGN),...Object.fromEntries(Object.entries(input).filter(([k])=>textFields.includes(k)||['sizeId','titleSize','imageId'].includes(k))),crop:{...DEFAULT_DESIGN.crop,...input.crop}};
-    if(!input.imageId){const image=this.recommend({query:input.imageQuery||[design.organization,design.title,design.subtitle,design.details].join(' '),category:input.category||'',scienceArea:input.scienceArea||'',limit:1})[0]?.image;if(!image)throw new Error('No approved image matches the requested filters.');design.imageId=image.id;}
+    const design={...defaultDesign(input.sizeId),...Object.fromEntries(Object.entries(input).filter(([k])=>textFields.includes(k)||['sizeId','titleSize','imageId','showSubtitle','showImage','entries'].includes(k))),crop:{...DEFAULT_DESIGN.crop,...input.crop}};
+    if(!input.imageId&&!(input.imageId===null&&design.showImage===false)){const image=this.recommend({query:input.imageQuery||[design.organization,design.title,design.subtitle,design.details].join(' '),category:input.category||'',scienceArea:input.scienceArea||'',limit:1})[0]?.image;if(!image)throw new Error('No approved image matches the requested filters.');design.imageId=image.id;}
     const image=this.gallery.find(image=>image.id===design.imageId);
     design.crop={...DEFAULT_DESIGN.crop,...image?.defaultCrop,...input.crop};
     return validateDesign(design,this.gallery);
@@ -106,7 +106,7 @@ export class DoorSignWorkspace {
     return this.mutate(()=>{
       const record=this.get(id);
       if(expectedRevision!==undefined&&expectedRevision!==record.revision)throw Object.assign(new Error('Design changed since it was read. Get the latest design and retry.'),{statusCode:409});
-      for(const key of Object.keys(patch))if(![...textFields,'sizeId','titleSize','imageId','crop'].includes(key))throw new Error(`Unknown editable property: ${key}`);
+      for(const key of Object.keys(patch))if(![...textFields,'showSubtitle','showImage','entries','sizeId','titleSize','imageId','crop'].includes(key))throw new Error(`Unknown editable property: ${key}`);
       const next=patchDesign(record.design,patch,this.gallery);
       if(JSON.stringify(next)!==JSON.stringify(record.design)){
         record.history.push(record.design);record.history=record.history.slice(-100);record.future=[];
@@ -140,14 +140,14 @@ export class DoorSignWorkspace {
   }
   async check(id) {
     const {quality,design}=await this.preview(id,100);
-    return {designId:design.id,...quality,printReady:quality.warnings.length===0&&quality.photoDpi>=300};
+    return {designId:design.id,...quality,printReady:quality.warnings.length===0&&(quality.imageVisible===false||quality.photoDpi>=300)};
   }
   async export({id=this.state.activeId,formats=['json','png','pdf']}={}) {
     const record=this.get(id),design=validateDesign(record.design,this.gallery);
     let rendered;
     if(formats.some(f=>f!=='json')){
       rendered=await renderNative(design,this.gallery,300);
-      if(rendered.quality.warnings.length||rendered.quality.photoDpi<300)throw new Error(`Print check failed: ${rendered.quality.warnings.join(' ')||`photo ${rendered.quality.photoDpi} dpi; zoom out`}`);
+      if(rendered.quality.warnings.length||(rendered.quality.imageVisible!==false&&rendered.quality.photoDpi<300))throw new Error(`Print check failed: ${rendered.quality.warnings.join(' ')||`photo ${rendered.quality.photoDpi} dpi; zoom out`}`);
     }
     const exportId=randomUUID(),directory=path.join(this.directory,'exports',exportId);await mkdir(directory,{recursive:true});
     const artifacts=[];
@@ -157,7 +157,7 @@ export class DoorSignWorkspace {
       else if(format==='png')data=Buffer.from(await pngWithDpi(await rendered.canvas.encode('png'),300).arrayBuffer());
       else if(format==='pdf')data=Buffer.from(await (await canvasPdf(rendered.canvas,SIZES[design.sizeId])).arrayBuffer());
       else throw new Error('Unknown export format.');
-      const filename=`${fileStem(design.title)}.${format}`,file=path.join(directory,filename);
+      const filename=`${fileStem(design.title,design.sizeId)}.${format}`,file=path.join(directory,filename);
       await writeFile(file,data,{flag:'wx',mode:0o600});
       artifacts.push({format,filename,path:file,bytes:data.length,url:this.editorUrl?`${this.editorUrl}exports/${exportId}/${filename}`:null});
     }
