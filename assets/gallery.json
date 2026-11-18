@@ -1,0 +1,15 @@
+[
+  {
+    "id": "campus-aerial",
+    "title": "Oak Ridge campus",
+    "src": "assets/gallery/campus-aerial.jpg",
+    "thumbnail": "assets/gallery/campus-aerial-thumb.jpg",
+    "alt": "Aerial view of the Oak Ridge National Laboratory campus, surrounding wooded hills, and blue sky.",
+    "category": "Campus",
+    "scienceAreas": ["General"],
+    "tags": ["aerial", "buildings", "landscape", "Oak Ridge", "ORNL", "trees"],
+    "approved": true,
+    "approvalNote": "Adam Malin authorized this photo for the public starter gallery on 2026-11-18.",
+    "source": "PHOTO layer in supplied ORNL-Signage_Medium-Template_8.5x5_DVCD.psd"
+  }
+]

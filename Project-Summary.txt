@@ -1,0 +1,40 @@
+ORNL DOOR SIGN STUDIO
+Updated: November 18, 2026
+
+REQUEST
+Create a new static site in the ORNL-Door-Signs GitHub repository, using the UI style of QR Studio. Start at 8.5 x 5 inches, support text editing, an approved searchable image gallery, editable JSON save/reopen, and 300 dpi PNG and physically sized PDF exports. Configure GitHub Pages.
+
+SOURCE AND IMPLEMENTATION
+Repository: https://github.com/adammalin/ORNL-Door-Signs
+Intended Pages URL: https://adammalin.github.io/ORNL-Door-Signs/
+Working checkout: /Users/ia2/Documents/Coding Projects/ORNL-Door-Signs
+Existing GitHub Desktop checkout: /Users/ia2/Documents/GitHub/ORNL Door Signs
+Supplied source: /Users/ia2/Desktop/Door Signs_2026 Update/
+UI source: /Users/ia2/Documents/Coding Projects/QR-code-gen
+
+Static HTML/CSS/JavaScript with no npm dependencies or external runtime services. Original supplied PSDs remain unchanged. The original campus photo and transparent leaf were extracted from the supplied medium DVCD PSD without example personal text. Adam explicitly approved the campus photo for this public starter gallery on November 18, 2026.
+
+EDITING AND EXPORTS
+Live canvas, editable organization/title/subtitle/group/room, automatic text fit, title sizing, approved-only gallery, combined text/category/science-area search, photo pan/zoom, keyboard crop, undo/redo, local autosave, JSON save/reopen with schema validation, and native file downloads with a visible fallback save link.
+True physical size: 8.5 x 5 inches (supplied JPG/PSD examples are 2550 x 1650 and have an 8.5 x 5.5 aspect ratio despite their filenames).
+PNG: 2550 x 1500 pixels with 300 dpi metadata.
+PDF: 612 x 360 points with the identical losslessly compressed RGB artwork.
+Photo crops below 300 effective dpi and text that does not fit block print export.
+Print at Actual size / 100%. No bleed, crop marks, CMYK conversion or PDF/X certification.
+
+VALIDATION
+Seven Node tests passed: JSON round-trip/schema rejection, gallery search/approval filtering, crop coverage, source resolution, PNG DPI/CRC, PDF size and xref integrity.
+Static production build passed.
+Browser checks passed for text editing, gallery no-results search, JSON export/reopen, new design, crop undo and low-resolution export blocking.
+Actual PNG inspected: 2550 x 1500, 299.9994 dpi (300 dpi rounding in pixels/meter).
+Actual PDF inspected with strict pypdf: one 612 x 360 point page; embedded 2550 x 1500 image pixels match the PNG exactly. Poppler render visually checked.
+Mobile layout checked at 390 px; no controls extend past viewport.
+Color/font audit: literal render colors match ORNL tokens; UI uses those tokens and derived neutral mixes, Mulish/Aptos/Arial fallback, and square containers. No undocumented palette deviations.
+
+DEPLOYMENT
+Pending final publication and live verification at the time this initial summary was written. See latest update below.
+
+NEXT CONTENT / PRODUCTION WORK
+Add more publicly approved images and their metadata through assets/gallery.json; instructions are in README.md. Keep stable image IDs for saved designs. Only the campus photo is approved in the starter gallery.
+Future sizes need a size registry entry and a corresponding verified layout, not aspect-ratio stretching.
+Final content/brand approval and a physical printer proof remain the owner's production review.
