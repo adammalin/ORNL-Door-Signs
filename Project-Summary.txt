@@ -45,5 +45,7 @@ QA evidence: output/qa/ (gitignored), including stdio-batch-v02.json, tutorial-v
 
 DEPLOYMENT
 Initial editor deployment succeeded: implementation 2bb53bc7ffbb3dfe5d5565da10c6a53183be7e12; workflow https://github.com/adammalin/ORNL-Door-Signs/actions/runs/44381856554.
-Version 0.2.0 tutorial/MCP update: local validation complete; publishing and live verification pending in this working session.
+Version 0.2.0 published successfully to main: a59dd8b77a349b24b91e63198dd7e9343cb7db48. Pages workflow completed successfully: https://github.com/adammalin/ORNL-Door-Signs/actions/runs/44396491126. GitHub CI installed dependencies, passed all 16 tests, built and deployed.
+Live browser verified first-visit tutorial, no automatic replay after reload, and manual Tutorial replay. All 14 WebMCP actions were registered on the deployed page. Both live PNG/PDF downloads passed dimensions, 300 dpi, strict PDF parsing and identical image-pixel checks. Live tutorial proof: output/qa/live-tutorial-v02.jpg. Only the approved campus image is public; the 125 Canto candidates remain on owner review hold.
+GitHub Desktop checkout is being fast-forwarded to the final summary commit after this release; no source changes were present before sync.
 Final content/brand review and a physical printer proof remain the owner's production review. Further sizes require new layout templates and physical export verification.
